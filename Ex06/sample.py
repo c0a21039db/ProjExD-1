@@ -68,21 +68,10 @@ class Bomb:
         yoko, tate = check_bound(self.rct, scr.rct)
         self.countwall = check_bound_count(self.rct, scr.rct, self.countwall)
         #無条件で加速する爆弾(追加)
-        self.vx *= yoko * 1.0002
-        self.vy *= tate * 1.0002
+        self.vx *= yoko * 1.0
+        self.vy *= tate * 1.0
         self.blit(scr)
 
-    def check_bound_count(obj_rct, scr_rct, countup): #x座標とy座標で反射した時の反射回数のカウント
-        """
-        第1引数：こうかとんrectまたは爆弾rect
-        第2引数：スクリーンrect
-        範囲内：+1／範囲外：-1
-        """
-        if obj_rct.left < scr_rct.left or scr_rct.right < obj_rct.right:
-            countup += 1
-        if obj_rct.top < scr_rct.top or scr_rct.bottom < obj_rct.bottom:
-            countup += 1
-        return countup
 
 #スコアを計測する関数
 class Score:
@@ -112,36 +101,48 @@ def check_bound(obj_rct, scr_rct):
         tate = -1
     return yoko, tate
 
+def check_bound_count(obj_rct, scr_rct, countup): #x座標とy座標で反射した時の反射回数のカウント
+    """
+    第1引数：こうかとんrectまたは爆弾rect
+    第2引数：スクリーンrect
+    範囲内：+1／範囲外：-1
+    """
+    if obj_rct.left < scr_rct.left or scr_rct.right < obj_rct.right:
+        countup += 1
+    if obj_rct.top < scr_rct.top or scr_rct.bottom < obj_rct.bottom:
+        countup += 1
+    return countup
 
-def load_sound(file):
-    """because pygame can be be compiled without mixer."""
-    if not pg.mixer:
-        return None
-    file = os.path.join(main_dir, "data", file)
-    try:
-        sound = pg.mixer.Sound(file)
-        return sound
-    except pg.error:
-        print("Warning, unable to load, %s" % file)
-    return None
+
+# def load_sound(file):
+#     """because pygame can be be compiled without mixer."""
+#     if not pg.mixer:
+#         return None
+#     file = os.path.join(main_dir, "data", file)
+#     try:
+#         sound = pg.mixer.Sound(file)
+#         return sound
+#     except pg.error:
+#         print("Warning, unable to load, %s" % file)
+#     return None
 
 
 def main():
-    if pg.get_sdl_version()[0] == 2:
-        pg.mixer.pre_init(44100, 32, 2, 1024)
-    pg.init()
-    if pg.mixer and not pg.mixer.get_init():
-        print("Warning, no sound")
-        pg.mixer = None
+    # if pg.get_sdl_version()[0] == 2:
+    #     pg.mixer.pre_init(44100, 32, 2, 1024)
+    # pg.init()
+    # if pg.mixer and not pg.mixer.get_init():
+    #     print("Warning, no sound")
+    #     pg.mixer = None
 
-    boom_sound = load_sound("boom.wav")
-    shoot_sound = load_sound("car_door.wav")
-    if pg.mixer:
-        music = os.path.join(main_dir, "data", "house_lo.wav")
-        pg.mixer.music.load(music)
-        pg.mixer.music.play(-1)
+    # boom_sound = load_sound("boom.wav")
+    # shoot_sound = load_sound("car_door.wav")
+    # if pg.mixer:
+    #     music = os.path.join(main_dir, "data", "house_lo.wav")
+    #     pg.mixer.music.load(music)
+    #     pg.mixer.music.play(-1)
 
-    clock =pg.time.Clock()
+    # clock =pg.time.Clock()
 
     # 練習１
     scr = Screen("逃げろ！こうかとん", (1600,900), "fig/pg_bg.jpg")
@@ -152,6 +153,7 @@ def main():
 
     # 練習５
     bkd_lst = []
+    #color_lst = []
     color_lst = ["red", "green", "blue", "yellow", "magenta"]
     for i in range(5):
         bkd = Bomb(color_lst[i%5], 10, (random.choice(range(-2, 3)), random.choice(range(-2, 3))), scr)
@@ -184,10 +186,15 @@ def main():
             if bkd_lst[i].countwall == 3:  #壁に爆弾が反射すると分散する
                 bkd_lst[i].countwall = 0
                 bkd = Bomb((255, 0, 0), 10, (+1, +1), scr, bkd_lst[i].rct.centerx, bkd_lst[i].rct.centery)
-                if len(bkd_lst) <= 3: #個数に制限をかける
+                if len(bkd_lst) <= 8: #個数に制限をかける
                     bkd_lst.append(bkd)
+            
+            print(bkd_lst[i].countwall)
 
             if kkt.rct.colliderect(bkd_lst[i].rct):
+                #こうかとんが爆発します
+                kkt = Bird("fig/explosion1.gif", 2.5, (kkt.rct.center))#爆ぜるこうかとん(追加)
+                kkt.update(scr)
                 #ゲーム終了時のスコアの表示
                 text_2 = font1.render(f"your score is {ans}", True, (255,0,0))
                 text_2_place = text_2.get_rect(midbottom=(800, 450))
@@ -197,7 +204,7 @@ def main():
                 return
 
         pg.display.update()
-        clock.tick(1000)
+        #clock.tick(1000)
     
 
 if __name__ == "__main__":
